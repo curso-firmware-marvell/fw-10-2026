@@ -1,0 +1,9 @@
+rtl/testbench.sv
+rtl/top.v
+rtl/config.vh
+rtl/mem_mux.v
+rtl/register_file.v
+rtl/mem_arbitrator.v
+rtl/dma.v
+rtl/adc.sv
+submodules/picorv32/picorv32.v

@@ -1,0 +1,6 @@
+[submodule "submodules/picorv32"]
+	path = submodules/picorv32
+	url = https://github.com/YosysHQ/picorv32
+[submodule "submodules/riscv-gnu-toolchain"]
+	path = submodules/riscv-gnu-toolchain
+	url = https://github.com/riscv-collab/riscv-gnu-toolchain
