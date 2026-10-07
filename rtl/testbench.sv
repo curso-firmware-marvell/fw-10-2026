@@ -15,6 +15,13 @@ module testbench;
     );
 
     initial begin
+        u_top.fake_uart0_data_input       = 32'b0;
+        u_top.fake_uart0_data_input_valid = 1'b0;
+        u_top.fake_uart1_data_input       = 32'b0;
+        u_top.fake_uart1_data_input_valid = 1'b0;
+    end
+
+    initial begin
         $dumpfile("wave.vcd");
         // $dumpfile("wave.fst");
         $dumpvars;
@@ -23,6 +30,7 @@ module testbench;
         init_memory();
         repeat (10) @(posedge clk);
 		uart_sniffer();
+		uart_trnasmiter();
 		led_monitor();
 
         repeat (10) @(posedge clk);
@@ -120,24 +128,42 @@ module testbench;
 	/////////////// print UART buffer //////////
 	task uart_sniffer();
 		reg [8*256-1:0] uart_buffer ;
-		integer uart_cnt;
+		integer size_msg, cnt;
 		fork
 			while(1)begin
-				uart_cnt = 0;
                 uart_buffer = 256*8'b0;
-				@(posedge clk);
-				while(u_top.u_register_file.REGISTER_UART_COMMAND != 32'b10)begin
-					wait (u_top.u_register_file.REGISTER_UART_COMMAND == 32'b1);
-					uart_buffer[8*((255-uart_cnt)+1)-1 -: 8] = u_top.u_register_file.REGISTER_UART_DATA[7:0];
-					uart_cnt = uart_cnt + 1;
-					wait (u_top.u_register_file.REGISTER_UART_COMMAND != 32'b1);
-				end
-				$write("\033[34mUART: ");
-                for (int i = 0; i < uart_cnt; i++) begin
-                    $write("%c", uart_buffer[8*((255-i)+1)-1 -: 8]);
+                wait (u_top.u_uart0.i_start_transmit == 1'b1);
+                size_msg = u_top.u_uart0.i_size_to_transmit;
+                cnt = 0;
+                while(cnt < size_msg)begin
+                    @(posedge clk);
+                    if(u_top.u_uart0.o_valid_output)begin
+                        uart_buffer[8*((255-cnt)+1)-1 -: 8] = u_top.u_uart0.o_output_data[7:0];
+                        cnt = cnt + 1;
+                    end
                 end
+				$write("\033[36mUART: ");
+                for (int i = 0; i < size_msg; i++) begin  $write("%c", uart_buffer[8*((255-i)+1)-1 -: 8]); end
                 $write("\033[0m\n");
-				@(u_top.u_register_file.REGISTER_UART_COMMAND != 32'd2);
+			end
+		join_none
+	endtask
+    ////////////////////////////////////////////
+
+    byte data_array[] = '{8'd72,8'd79,8'd76,8'd65,8'd33};
+	/////////////// uart input transmiter //////////
+	task uart_trnasmiter();
+		fork
+			while(1)begin
+                wait (u_top.u_register_file.REGISTER_AUX_0 == 32'h5ED5ED);
+                @(posedge clk);
+                for(int i=0; i< data_array.size() ; i++)begin
+                    force u_top.fake_uart0_data_input_valid = 1'b1;
+                    force u_top.fake_uart0_data_input = data_array[i];
+                    @(posedge clk);
+                end
+                force u_top.fake_uart0_data_input_valid = 1'b0;
+
 			end
 		join_none
 	endtask
@@ -153,5 +179,24 @@ module testbench;
 		join_none
 	endtask
     ////////////////////////////////////////////
+
+    // task uart0_send(input [31:0] data);
+    //     begin
+    //         u_top.fake_uart0_data_input       = data;
+    //         u_top.fake_uart0_data_input_valid = 1'b1;
+    //         @(posedge clk);
+    //         u_top.fake_uart0_data_input_valid = 1'b0;
+    //     end
+    // endtask
+
+
+    // task uart1_send(input [31:0] data);
+    //     begin
+    //         u_top.fake_uart1_data_input       = data;
+    //         u_top.fake_uart1_data_input_valid = 1'b1;
+    //         @(posedge clk);
+    //         u_top.fake_uart1_data_input_valid = 1'b0;
+    //     end
+    // endtask
 
 endmodule

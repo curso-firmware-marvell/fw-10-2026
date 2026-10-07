@@ -76,7 +76,28 @@ module top #() (
     wire [1:0]                                                  adc_status;
     wire [1:0]                                                  adc_start;
     wire [NB_MEM_ADDRESS-1:0]                                   adc_clk_divider;            
-    wire [REG_ARRAY_READ_WRITE_TEST_SIZE*NB_MEM_ADDRESS-1:0]    adc_data_mem;
+    wire [REG_ARRAY_ADC_BUFF_SIZE*NB_MEM_ADDRESS-1:0]    adc_data_mem;
+
+
+            // uart 0 
+    wire    [31                                     :0]  uart0_transmision_done;
+    wire    [31                                     :0]  uart0_data_available;
+    wire    [31 * REG_ARRAY_UART0_BUFF_IN_SIZE - 1  :0]  array_uart0_buff_in;
+    wire    [31                                     :0]  uart0_index_in;
+    wire    [31                                     :0]  uart0_start_transmit;
+    wire    [31                                     :0]  uart0_size_to_transmit;
+    wire    [31                                     :0]  uart0_data_flush;
+    wire    [31 * REG_ARRAY_UART0_BUFF_OUT_SIZE- 1  :0]  array_uart0_buff_out;
+        
+        // uart 1
+    wire    [31                                     :0]  uart1_transmision_done;
+    wire    [31                                     :0]  uart1_data_available;
+    wire    [31 * REG_ARRAY_UART1_BUFF_IN_SIZE - 1  :0]  array_uart1_buff_in;
+    wire    [31                                     :0]  uart1_index_in;
+    wire    [31                                     :0]  uart1_start_transmit;
+    wire    [31                                     :0]  uart1_size_to_transmit;
+    wire    [31                                     :0]  uart1_data_flush;
+    wire    [31 * REG_ARRAY_UART1_BUFF_OUT_SIZE- 1  :0]  array_uart1_buff_out;
 
     mem_arbitrator #(
     ) u_mem_arbitrator(
@@ -156,8 +177,6 @@ module top #() (
 
         .o_reg_fw_status          ()                     ,
         .o_reg_fw_report          ()                     ,
-        .o_reg_uart_data          ()                     ,
-        .o_reg_uart_command       ()                     ,
         .o_reg_aux_0              ()                     ,
         .o_reg_mcu_reset          (mcu_reset_rf)         ,
         .o_reg_dma_source_addr    (dma_source)           ,
@@ -168,6 +187,27 @@ module top #() (
         .o_reg_adc_clk_divider    (adc_clk_divider)      ,   
         .o_reg_led                ()                     ,
         
+        // uart 0 
+        .i_reg_uart0_transmision_done  (uart0_transmision_done) ,
+        .i_reg_uart0_data_available    (uart0_data_available) ,
+        .i_reg_array_uart0_buff_in     (array_uart0_buff_in) ,
+        .i_reg_uart0_index_in          (uart0_index_in) ,
+        .o_reg_uart0_start_transmit    (uart0_start_transmit) ,
+        .o_reg_uart0_size_to_transmit  (uart0_size_to_transmit) ,
+        .o_reg_uart0_data_flush        (uart0_data_flush) ,
+        .o_reg_array_uart0_buff_out    (array_uart0_buff_out) ,
+        
+        // uart 1
+        .i_reg_uart1_transmision_done  (uart1_transmision_done) ,
+        .i_reg_uart1_data_available    (uart1_data_available) ,
+        .i_reg_array_uart1_buff_in     (array_uart1_buff_in) ,
+        .i_reg_uart1_index_in          (uart1_index_in) ,
+        .o_reg_uart1_start_transmit    (uart1_start_transmit) ,
+        .o_reg_uart1_size_to_transmit  (uart1_size_to_transmit) ,
+        .o_reg_uart1_data_flush        (uart1_data_flush) ,
+        .o_reg_array_uart1_buff_out    (array_uart1_buff_out) ,
+
+
         .i_clk                    (i_clk         )         ,
 
         .i_trigger_reg            (control_rf_trigger_reg   )      ,
@@ -177,9 +217,72 @@ module top #() (
         .o_mem_rdata              (control_rf_reg_mem_rdata )      
     );
 
+    reg  [31:0] fake_uart0_data_input         ;
+    reg         fake_uart0_data_input_valid   ;
+    wire [31:0] fake_uart0_data_output        ;
+    wire        fake_uart0_data_output_valid  ;
+    uart #(
+        .NB_DATA        (32) ,
+        .SIZE_BUFF_IN   (REG_ARRAY_UART0_BUFF_IN_SIZE) ,
+        .SIZE_BUFF_OUT  (REG_ARRAY_UART0_BUFF_OUT_SIZE) 
+    ) u_uart0 (
+        .i_flush_data       (uart0_data_flush) ,
+        .o_data_available   (uart0_data_available) ,
+        .o_buff_in          (array_uart0_buff_in) ,
+        .o_index_in         (uart0_index_in) ,
+
+        .i_start_transmit   (uart0_start_transmit) ,
+        .i_size_to_transmit (uart0_size_to_transmit) ,
+        .i_buff_out         (array_uart0_buff_out) ,
+        .o_transmision_done (uart0_transmision_done) ,
+
+        // fake world 
+        .i_valid_input      (fake_uart0_data_input_valid) ,
+        .i_input_data       (fake_uart0_data_input) ,
+        .o_valid_output     (fake_uart0_data_output_valid) ,
+        .o_output_data      (fake_uart0_data_output) ,
+
+        .i_clk              (i_clk    ) ,
+        .i_rst_n            (i_resetn ) 
+
+    );
+
+
+    reg  [31:0] fake_uart1_data_input         ;
+    reg         fake_uart1_data_input_valid   ;
+    wire [31:0] fake_uart1_data_output        ;
+    wire        fake_uart1_data_output_valid  ;
+    uart #(
+        .NB_DATA        (32) ,
+        .SIZE_BUFF_IN   (REG_ARRAY_UART1_BUFF_IN_SIZE) ,
+        .SIZE_BUFF_OUT  (REG_ARRAY_UART1_BUFF_OUT_SIZE) 
+    ) u_uart1 (
+        .i_flush_data       (uart1_data_flush) ,
+        .o_data_available   (uart1_data_available) ,
+        .o_buff_in          (array_uart1_buff_in) ,
+        .o_index_in         (uart1_index_in) ,
+
+        .i_start_transmit   (uart1_start_transmit) ,
+        .i_size_to_transmit (uart1_size_to_transmit) ,
+        .i_buff_out         (array_uart1_buff_out) ,
+        .o_transmision_done (uart1_transmision_done) ,
+
+
+        // fake world 
+        .i_valid_input      (fake_uart1_data_input_valid) ,
+        .i_input_data       (fake_uart1_data_input) ,
+        .o_valid_output     (fake_uart1_data_output_valid) ,
+        .o_output_data      (fake_uart1_data_output) ,
+
+        .i_clk              (i_clk    ) ,
+        .i_rst_n            (i_resetn ) 
+
+    );
+
+
     adc #(
         .DATA_WIDTH  (NB_MEM_DATA),
-        .N_SAMPLES   (REG_ARRAY_READ_WRITE_TEST_SIZE)
+        .N_SAMPLES   (REG_ARRAY_ADC_BUFF_SIZE)
     ) u_adc (
         .i_clk          (i_clk),
         .i_rst_n        (i_resetn),

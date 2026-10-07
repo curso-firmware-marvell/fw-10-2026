@@ -18,7 +18,8 @@ LDFLAGS = -Tlinker.ld -Wl,--gc-sections -Wl,-verbose
 
 # SRC = startup.S print.c test_adc.c
 # SRC = startup.S print.c test_dma.c 
-SRC = startup.S print.c test_fw_status.c
+# SRC = startup.S print.c test_fw_status.c
+SRC = startup.S print.c test_new_uart.c
 
 .PHONY: all disasm clean 
 

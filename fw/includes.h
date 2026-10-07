@@ -11,3 +11,10 @@ void print_str(const char *p);
 void print_dec(unsigned int val);
 void print_hex(unsigned int val, int digits);
 void print_flush_buffer(void);
+
+
+// // RX
+// int uart_rx_available(void);
+// unsigned int uart_rx_read(void);
+// unsigned int uart_rx_count(void);
+// void uart_rx_flush(void);

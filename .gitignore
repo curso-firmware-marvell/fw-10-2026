@@ -10,3 +10,4 @@ fw/fw.hex
 my_table_no_upload.txt
 run_tp.source
 rtl/tb_adc.sv
+sync_files_private_repo.sh

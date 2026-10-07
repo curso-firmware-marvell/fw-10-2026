@@ -6,4 +6,5 @@ rtl/register_file.v
 rtl/mem_arbitrator.v
 rtl/dma.v
 rtl/adc.sv
+rtl/uart.v
 submodules/picorv32/picorv32.v
