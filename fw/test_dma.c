@@ -88,7 +88,7 @@ int check_dma_i_d_mem(){
     return(0);
 }
 
-volatile unsigned int * const register_array = (volatile unsigned int *)(REG_ARRAY_READ_WRITE_TEST_BASE);
+volatile unsigned int * const register_array = (volatile unsigned int *)(REG_ARRAY_UART0_BUFF_OUT);
 
 int check_dma_registers(){
     REG_FW_REPORT = 0x0 ;
