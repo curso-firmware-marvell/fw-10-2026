@@ -41,7 +41,7 @@ src/
 └── demo/    Código de prueba / demostración
 ```
 
-El proyecto de referencia añade `cpp/` (envoltorio C++ para demos de símbolos mangled) y `asm/` (ensamblador para demos de `as`). El laboratorio añade `platform/`: la salida de consola (`print.h`), con un backend para la PC en `platform/host/`.
+El proyecto de referencia añade `cpp/` (envoltorio C++ para demos de símbolos mangled) y `asm/` (ensamblador para demos de `as`). El laboratorio añade `src/platform/`: la salida de consola (`print.h`), con un backend para la PC en `src/platform/host/`.
 
 ## Requisitos previos
 
@@ -67,4 +67,4 @@ sudo apt install build-essential
 
 ## Material relacionado
 
-El directorio [`platform/`](../../platform/) (raíz del repositorio) contiene la simulación FPGA RISC-V. El laboratorio deja preparada la base para llevarlo ahí: `src/app/main.c` y la salida de consola de `src/platform/`, donde se agrega un backend nuevo junto a `host/` sin tocar el resto del código.
+La [raíz del repositorio](../../) contiene la plataforma de simulación FPGA RISC-V ([Makefile](../../Makefile), [RTL](../../rtl/), [firmware](../../fw/)). El laboratorio TP3 conserva su propio backend de consola en `src/platform/`; no depende de la plataforma FPGA ni integra su biblioteca dentro del firmware.

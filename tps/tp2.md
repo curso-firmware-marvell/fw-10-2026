@@ -2,7 +2,7 @@
 
 ### Completen la tabla: 
 
-Usando el test ``test_fw_status.c`` como base completen la siguiente tabla, donde en cada iteración tienen que modificar el FW, el compilador o el HW.
+Usando el test ``fw/tests/test_fw_status.c`` como base completen la siguiente tabla, donde en cada iteración tienen que modificar el FW, el compilador o el HW.
 
 Asegurense que en ``fw/Makefile`` estemos compilado el fw que queremos. Ejecuten un ``make clean`` antes de pasar a la siguiente línea de la tabla. 
 
