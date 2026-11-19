@@ -1,4 +1,4 @@
-# Hito 3.b - driver UART1 (sin control de flujo)
+# TP5 3.b - driver UART1 (sin control de flujo)
 # Protocolo de test_uart_serial.c: 'K' al arrancar; 'E' n datos = eco; 'S' k = deja de leer
 # un rato y manda 'S'; 'R' = manda 'R' flags (bit0 framing, bit1 overrun) y los limpia.
 baud 32

@@ -1,4 +1,4 @@
-/* Hito 1: aplicacion de prueba del driver de UART1 (provista por la catedra).
+/* TP5 3.b: aplicacion de prueba del driver de UART1 (provista por la catedra).
  *
  * Protocolo de un byte de comando, sin control de flujo:
  *   al arrancar    -> manda 'K'
@@ -7,7 +7,7 @@
  *   'R'            -> manda 'R' flags (bit0 = framing error, bit1 = overrun) y limpia los flags
  *   cualquier otro -> se ignora
  *
- * El host del test siempre espera RTS. Como el control de flujo es del hito 2, esta app deja
+ * El host del test siempre espera RTS. Como el control de flujo es del TP6, esta app deja
  * RTS en alto escribiendo el registro directamente (no usa uart1_set_rts()). Lo repite antes de
  * cada lectura porque escribir REG_UART1_CTRL reemplaza los dos bits: un uart1_clear_errors()
  * que escriba solo CLR_ERR bajaria RTS.

@@ -32,7 +32,7 @@
 #define UART1_ERR_FRAME         (1u << 0)
 #define UART1_ERR_OVERRUN       (1u << 1)
 
-/* ---------------- Hito 1 ---------------- */
+/* ---------------- 3.b (TP5) ---------------- */
 
 /* Programa BAUD_DIV (clocks por bit) y limpia los flags de error. */
 void     uart1_init(uint32_t baud_div);
@@ -59,7 +59,7 @@ uint32_t uart1_errors(void);
 /* Limpia los flags sticky. */
 void     uart1_clear_errors(void);
 
-/* ---------------- Hito 2 ---------------- */
+/* ---------------- TP6: control de flujo ---------------- */
 
 /* ready=1: RTS activo (el host puede mandar). ready=0: pide al host que pare. */
 void     uart1_set_rts(int ready);

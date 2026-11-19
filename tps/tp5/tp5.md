@@ -22,6 +22,7 @@ Reglas generales:
 - Cada driver debe tener su .h y su .c.
 - En main y en demos no debe haber escrituras directas a registros.
 - Validar cada hito antes de avanzar al siguiente.
+- La interfaz de cada driver es exactamente la de "Interfaz requerida" (nombres y tipos): el chequeo de la cátedra, `fw/tests/test_drivers.c`, la usa tal cual.
 
 ## Hitos
 
@@ -38,6 +39,7 @@ Tareas:
 - Ubicarlos en:
   - fw/drivers/inc
   - fw/drivers/src
+- Sumar cada `.c` a `fw/sources.mk`, una línea por archivo (por ejemplo `SRC += drivers/src/led.c`). Un `.c` que no está en `sources.mk` no se compila ni se enlaza. Eso incluye `drivers/src/uart1.c` del punto 3.b.
 
 
 Pregunta de control:
@@ -61,6 +63,7 @@ Interfaz requerida:
 Reglas:
 - idx válido: 0 a 7.
 - Si idx es inválido, no modificar el registro.
+- `led_write(value)` deja los 8 LEDs exactamente con el valor `value`: a diferencia de `led_on`, `led_off` y `led_toggle`, no conserva el estado anterior.
 
 Chequeo mínimo:
 - Encender, apagar y toggle en uno y varios bits.
@@ -72,12 +75,14 @@ Pregunta de control:
 ### 3.a Driver UART0
 
 Objetivo:
-- Unificar transmisión y recepción para UART0.
+- Encapsular la transmisión por UART0.
 
 Interfaz requerida:
-- uart_init(uart_id_t uart)
-- uart_write_byte(uart_id_t uart, char c)
-- uart_write_str(uart_id_t uart, const char *s)
+- uart_write_byte(char c)
+- uart_write_str(const char *s)
+
+Reglas:
+- Las dos funciones son bloqueantes: al volver, la transmisión terminó.
 
 Chequeo mínimo:
 - Enviar texto de debug por UART0.
@@ -134,6 +139,8 @@ Interfaz requerida:
 
 Reglas:
 - El START debe quedar encapsulado en el driver.
+- `dma_copy` es bloqueante: al volver, la copia terminó y `dma_is_done()` devuelve un valor distinto de 0.
+- Direcciones inválidas: si el rango de `src` o de `dst` (`n_words` palabras desde la dirección) sale de la zona mapeada, `0x0000_0000`–`0x0005_FFFF` (ver `project_config.def`), `dma_copy` no inicia la transferencia y no modifica el destino. En esas direcciones el bus no responde nunca y el DMA quedaría colgado.
 
 Chequeo mínimo:
 - Copiar un arreglo origen a destino.
@@ -155,6 +162,14 @@ Interfaz requerida:
 - adc_done(void)
 - adc_read(uint32_t *data, uint32_t size)
 
+Reglas:
+- `adc_init` fija el divisor de reloj del muestreo (`REG_ADC_CLK_DIVIDER`); `adc_read` adquiere con el divisor ya configurado, no fija uno propio.
+- `adc_read` hace una adquisición completa (dispara, espera el fin y copia las muestras) y devuelve cuántas copió: como máximo 256 (`REG_ARRAY_ADC_BUFF_SIZE`), y 0 si `data` es nulo.
+- `adc_half_done()` y `adc_done()` son bloqueantes: esperan el flag correspondiente, leído con máscara.
+- `REG_ADC_STATUS`: bit 0 = mitad de la captura lista, bit 1 = captura completa.
+- `adc_mode` es el valor que se escribe en `REG_ADC_START`: bit 0 = inicio de captura, bit 1 = modo (0 = captura única de 256 muestras, 1 = circular: recomienza sola al terminar). `adc_read` usa captura única (`adc_start(1)`).
+- La captura arranca con el flanco 0→1 del bit 0 de `REG_ADC_START`: `adc_start` tiene que escribir 0 antes de `adc_mode`. Si el registro ya valía 1 de una captura anterior no hay flanco, no arranca, y el flag de captura completa sigue en 1 con los datos viejos.
+
 Chequeo mínimo:
 - Obtener una lectura del ADC.
 - Imprimir la lectura mediante el UART. 
@@ -162,7 +177,7 @@ Chequeo mínimo:
 Ejemplo: 
 
 ```c
-uint16_t samples[256];
+uint32_t samples[256];
 adc_read(samples, 256);
 print_str("-- ADC data read --");
 for (int i = 0; i < 256; i++) {
@@ -214,8 +229,10 @@ Chequeo mínimo:
 Checklist final:
 - Compila desde cero.
 - Correr fw/tests/test_drivers.c
-  - make fw TARGET=test_drivers
-  - make sim
+  - make test_drivers (tiene que terminar en [ OK ] PASS)
+  - o, para ver la consola completa: make fw TARGET=test_drivers y make sim
+- Correr fw/tests/test_uart_serial.c
+  - make test_uart_serial (tiene que terminar en [ OK ] PASS)
 
 ## Entrega
 

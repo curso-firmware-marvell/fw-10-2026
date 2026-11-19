@@ -9,7 +9,7 @@ typedef unsigned int u;
 typedef volatile unsigned int vu;
 
 static u z = 0x2F6E2B1Du;
-static u f;
+static u f, e;
 static vu A[320], B[320], C[320], G[1100], H[1100];
 static uint32_t X[300];
 
@@ -24,7 +24,9 @@ static void k(u i, int c)
     if (c)
         return;
     char m[4] = { 'T', (char)('0' + i / 10), (char)('0' + i % 10), 0 };
-    f |= 1u << i;
+    e = 1;
+    if (i < 32)
+        f |= 1u << i;
     print_str(m);
 }
 
@@ -86,6 +88,16 @@ static void w0(void)
         ok &= (M == m) && (led_get_mask() == m);
     }
     k(6, ok);
+
+    ok = 1;
+    for (j = 0; j < 6; j++) {
+        led_set_mask(0xFF);
+        led_write(v[j]);
+        ok &= (M == v[j]) && (led_get_mask() == v[j]);
+        for (i = 0; i < 8; i++)
+            ok &= (led_get_status(i) == ((v[j] >> i) & 1u));
+    }
+    k(31, ok);
     led_set_mask(0);
 }
 
@@ -187,6 +199,7 @@ static void w3(void)
     static const u dv[] = { 1, 2, 5, 255 };
     u i, j, r, ok1 = 1, ok2 = 1, ok3 = 1;
 
+    adc_init(3);
     for (j = 0; j < 5; j++) {
         for (i = 0; i < 300; i++) X[i] = 0xC0DE0000u | i;
         r = adc_read(&X[4], n[j]);
@@ -228,10 +241,42 @@ static void w3(void)
 
     ok1 = 1;
     for (j = 0; j < 4; j++) {
-        set_adc_clk_divider(dv[j]);
+        adc_init(dv[j]);
         ok1 &= (REG_ADC_CLK_DIVIDER == dv[j]);
     }
     k(28, ok1);
+    adc_init(3);
+}
+
+/* DMA con direcciones invalidas. Es lo ultimo que se prueba: un dma_copy sin chequeo se cuelga
+ * (el bus no contesta fuera del mapa) y la simulacion termina por TIMEOUT. */
+static void w4(void)
+{
+    const void *bad = (const void *)0x00100000u;
+    u i, ok1 = 1, ok2 = 1, ok3 = 1, ok4 = 1;
+
+    for (i = 0; i < 320; i++) { A[i] = q(); C[i] = A[i]; B[i] = 0xA5A50000u ^ i; }
+
+    dma_copy(bad, (void *)&B[0], 16);
+    for (i = 0; i < 320; i++)
+        ok1 &= (B[i] == (0xA5A50000u ^ i));
+    k(32, ok1);
+
+    dma_copy((const void *)&A[0], (void *)bad, 16);
+    for (i = 0; i < 320; i++)
+        ok2 &= (A[i] == C[i]);
+    k(33, ok2);
+
+    dma_copy((const void *)0x0005FFF8u, (void *)&B[0], 4);
+    for (i = 0; i < 320; i++)
+        ok3 &= (B[i] == (0xA5A50000u ^ i));
+    k(34, ok3);
+
+    dma_copy((const void *)&A[0], (void *)&B[0], 32);
+    for (i = 0; i < 32; i++)
+        ok4 &= (B[i] == A[i]);
+    ok4 &= (dma_is_done() != 0);
+    k(35, ok4);
 }
 
 int main(void)
@@ -241,11 +286,13 @@ int main(void)
     REG_FW_STATUS = 0;
     REG_FW_REPORT = 0;
     f = 0;
+    e = 0;
 
     w0();
     w1();
     w2();
     w3();
+    w4();
     REG_FW_REPORT = f;
 
     adc_read(&X[4], 256);
@@ -253,6 +300,6 @@ int main(void)
     for (i = 0; i < 256; i++)
         print_dec(X[4 + i]);
 
-    REG_FW_STATUS = f ? 0xBAD : 0xFF;
+    REG_FW_STATUS = e ? 0xBAD : 0xFF;
     return 0;
 }
